@@ -2,8 +2,8 @@ from random import random
 from math import exp
 import numpy as np
 
-mcs = 230000
-mcs0 = 30000
+mcs = 11000
+mcs0 = 1000
 mag = 0.0
 mag_sum = 0.0
 T = 0.1
@@ -32,7 +32,7 @@ for i in range(L):
 plik = open('dane.txt', 'w')
 plik.writelines('Temperatura\tSrednie namagnesowanie\n')
 
-while (T <= 15):
+while (T <= 10):
     for m in range(mcs):
         for i in range(L):
             for j in range(L):
@@ -51,8 +51,8 @@ while (T <= 15):
             mag = mag + np.sum(S)
             mag = mag / L ** 3
             mag_sum = mag_sum + abs(mag)
-    mag_sum = mag_sum / 2000.0
+    mag_sum = mag_sum / 100.0
     plik.writelines(f'{T}\t{mag_sum}\n')
-    T += 0.2
+    T += 1
 
 plik.close()
