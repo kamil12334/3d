@@ -1,0 +1,86 @@
+import random
+import matplotlib.pyplot as plt
+import numpy as np
+random.seed()
+
+MCS=230000 # liczba kroków Monte Carlo 100 000
+MCS0=30000 # liczba odrzuconych konfiguracji 10 000
+Ltab=[5,10,20] # tablica wymiarów układu
+Ttab=np.arange(2.5,6.01,0.1) # tablica temperatur
+M=np.zeros((len(Ttab),3)) # tablica średniej magnetyzacji
+C=np.zeros((len(Ttab),3)) # tablica średniej pojemności cieplnej
+
+steps=0
+for l in range(MCS):
+    if(l>=MCS0 and l%100==99):       
+        steps=steps+1 # licznik konfiguracji wziętych do obliczeń
+        
+column=0        
+for L in Ltab:
+    s=np.ones((L,L,L))
+    up=np.array([])
+    down=np.array([])
+    for l in range(L):
+        up=np.append(up,l+1)
+        down=np.append(down,l-1)
+    up[L-1]=0
+    down[0]=L-1
+    line=0
+    for T in Ttab:
+        m=0.
+        Utab=np.array([])
+        for l in range(MCS):
+            for a in range(L):
+                for b in range(L):
+                    for c in range(L):
+                        deltaU=2*s[a,b,c]*(s[int(up[a]),b,c]+s[int(down[a]),b,c]\
+                        +s[a,int(up[b]),c]+s[a,int(down[b]),c]+s[a,b,int(up[c])]+s[a,b,int(down[c])])
+                        if deltaU<0:
+                            s[a,b,c]=-s[a,b,c]
+                        else:
+                            if random.random()<=np.exp(-deltaU/T):
+                                s[a,b,c]=-s[a,b,c]
+            if(l>=MCS0 and l%100==99):       
+                m=m+abs(np.sum(s)/L**3)
+                U=0.
+                for a in range(L):
+                    for b in range(L):
+                        for c in range(L):
+                            U=U-1*s[a,b,c]*(s[int(up[a]),b,c]+s[a,int(up[b]),c]+s[a,b,int(up[c])])
+                Utab=np.append(Utab, U)
+        C[line,column]=1./(L**3*T**2)*(sum(Utab**2)/steps-(sum(Utab)/steps)**2)       
+        M[line,column]=m/steps
+        #print(T,M[line,column],C[line,column])
+        with open("dane_wiktora.txt", "a") as myfile:
+            myfile.write(str(T) + ' ' + str(M[line,column]) + ' ' + str(C[line,column]) + '\n')
+        line=line+1
+    column=column+1
+   
+plt.figure(figsize=(8,6))
+plt.plot(Ttab,M[:,0],'o',markersize=5,label='L = ' + str(Ltab[0]))
+plt.plot(Ttab,M[:,1],'o',markersize=5,label='L = ' + str(Ltab[1]))
+plt.plot(Ttab,M[:,2],'o',markersize=5,label='L = ' + str(Ltab[2]))
+plt.xlabel('Temperatura zredukowana', size=10)
+plt.ylabel('Średnia magnetyzacja', size=10)
+plt.title('Zależność średniej magnetyzacji od temperatury zredukowanej',size=10)
+plt.legend(loc = 'upper right')
+plt.text(2.5, 0.1, 'Liczba kroków Monte Carlo MCS = ' + str(MCS), fontsize=10)
+plt.text(2.5, 0.05, 'Liczba odrzuconych konfiguracji MCS0 = ' + str(MCS0), fontsize=10)
+plt.tight_layout()
+plt.savefig('Magnetyzacja.png')
+plt.show()
+
+plt.figure(figsize=(8,6))
+plt.plot(Ttab,C[:,0],'o',markersize=5,label='L = ' + str(Ltab[0]))
+plt.plot(Ttab,C[:,1],'o',markersize=5,label='L = ' + str(Ltab[1]))
+plt.plot(Ttab,C[:,2],'o',markersize=5,label='L = ' + str(Ltab[2]))
+plt.xlabel('Temperatura zredukowana', size=10)
+plt.ylabel('Średnia pojemność cieplna', size=10)
+plt.title('Zależność średniej pojemności cieplnej od temperatury zredukowanej',size=10)
+plt.legend(loc = 'upper right')
+plt.text(2.5, 2.3, 'Liczba kroków Monte Carlo MCS = ' + str(MCS), fontsize=10)
+plt.text(2.5, 2.2, 'Liczba odrzuconych konfiguracji MCS0 = ' + str(MCS0), fontsize=10)
+plt.tight_layout()
+plt.savefig('Pojemnosc.png')
+plt.show()
+
